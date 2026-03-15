@@ -80,6 +80,22 @@ int test_jwt() {
             token.payload, "JWT Payload");
     }
 
+    raw_jwt = "trash";
+
+    token = decode_jwt(arena, raw_jwt);
+
+    if (token.header) {
+        printf("FAILED: JWT incorrect\nExpected:\nNULL\nGot:\n%s\n",
+               token.header);
+        return 1;
+    }
+
+    if (token.payload) {
+        printf("FAILED: JWT incorrect\nExpected:\nNULL\nGot:\n%s\n",
+               token.payload);
+        return 1;
+    }
+
     arena_free(arena);
 
     return 0;

@@ -51,6 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 build/
+tests/runner
 
 # debug information files
 *.dwo

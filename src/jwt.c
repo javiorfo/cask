@@ -33,14 +33,28 @@ Jwt decode_jwt(Arena *a, const char *jwt_str) {
 
     int h_len = (int)(dot - start);
     char *h_b64 = prepare_base64(a, start, h_len);
+    if (!h_b64) return result;
 
     result.header = arena_alloc(a, h_len + 1);
+    if (!result.header) return result;
 
     BIO *b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO *bio = BIO_new_mem_buf(h_b64, -1);
+    if (!b64 || !bio) {
+        BIO_free(b64);
+        BIO_free(bio);
+        return result;
+    }
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
+
     int decoded_len = BIO_read(bio, result.header, h_len);
+    if (decoded_len <= 0) {
+        BIO_free_all(bio);
+        result.header = NULL;
+        return result;
+    }
     result.header[decoded_len] = '\0';
     BIO_free_all(bio);
 
@@ -51,12 +65,19 @@ Jwt decode_jwt(Arena *a, const char *jwt_str) {
 
     int p_len = (int)(dot - start);
     char *p_b64 = prepare_base64(a, start, p_len);
+    if (!p_b64) return result;
 
     result.payload = arena_alloc(a, p_len + 1);
+    if (!result.payload) return result;
 
     bio = BIO_push(BIO_new(BIO_f_base64()), BIO_new_mem_buf(p_b64, -1));
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
     decoded_len = BIO_read(bio, result.payload, p_len);
+    if (decoded_len <= 0) {
+        BIO_free_all(bio);
+        result.payload = NULL;
+        return result;
+    }
     result.payload[decoded_len] = '\0';
     BIO_free_all(bio);
 
